@@ -366,7 +366,11 @@ func (s *KVStore) IsLatchEnabled() bool {
 }
 
 func (s *KVStore) runTxnSafePointUpdater() {
-	defer s.wg.Done()
+	defer func() {
+		logutil.BgLogger().Warn("runTxnSafePointUpdater exit")
+		s.wg.Done()
+	}()
+	logutil.BgLogger().Warn("start enter runTxnSafePointUpdater")
 	d := pollTxnSafePointInterval
 	gcStatesClient := s.pdClient.GetGCStatesClient(uint32(s.getCodec().GetKeyspaceID()))
 	for {
@@ -376,6 +380,11 @@ func (s *KVStore) runTxnSafePointUpdater() {
 			if err == nil {
 				metrics.TiKVLoadSafepointCounter.WithLabelValues("ok").Inc()
 				s.UpdateTxnSafePointCache(gcStates.TxnSafePoint, now)
+
+				logutil.BgLogger().Warn("CheckVisibility runTxnSafePointUpdater",
+					zap.Time("lastCacheTime", now),
+					zap.Uint64("cachedTxnSafePoint", gcStates.TxnSafePoint))
+
 				d = pollTxnSafePointInterval
 			} else {
 				metrics.TiKVLoadSafepointCounter.WithLabelValues("fail").Inc()
