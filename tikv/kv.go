@@ -367,6 +367,7 @@ func (s *KVStore) IsLatchEnabled() bool {
 
 func (s *KVStore) runTxnSafePointUpdater() {
 	defer func() {
+		fmt.Println("runTxnSafePointUpdater exit", time.Now().String())
 		logutil.BgLogger().Warn("runTxnSafePointUpdater exit")
 		s.wg.Done()
 	}()
